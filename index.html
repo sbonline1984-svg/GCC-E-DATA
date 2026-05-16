@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="as">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GCC Employee Directory</title>
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Sanskrit&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --card: #1c2230;
+    --border: #30363d;
+    --accent: #f0883e;
+    --accent2: #58a6ff;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --success: #3fb950;
+    --tag-bg: #1f2d40;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #0f2042 0%, #1a1033 50%, #0d1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 24px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(88,166,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .college-name {
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .college-logo-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .college-logo {
+    max-width: min(600px, 90vw);
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.45);
+    display: block;
+  }
+  .header h1 {
+    font-size: clamp(20px, 4vw, 30px);
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+  .header .subtitle {
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stat-pill b { color: var(--accent2); }
+
+  /* Search section */
+  .search-section {
+    max-width: 780px;
+    margin: 28px auto 0;
+    padding: 0 16px;
+  }
+  .search-wrap {
+    position: relative;
+  }
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 18px;
+    pointer-events: none;
+  }
+  #searchInput {
+    width: 100%;
+    padding: 14px 48px 14px 46px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  #searchInput:focus {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(88,166,255,0.12);
+  }
+  #searchInput::placeholder { color: var(--muted); }
+  .clear-btn {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--border);
+    border: none;
+    color: var(--muted);
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  .clear-btn:hover { background: #444; color: #fff; }
+
+  /* Filter chips */
+  .filters {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .chip:hover { border-color: var(--accent2); color: var(--accent2); }
+  .chip.active {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: #0d1117;
+    font-weight: 600;
+  }
+
+  /* Results info */
+  .results-info {
+    max-width: 780px;
+    margin: 16px auto 0;
+    padding: 0 16px;
+    font-size: 13px;
+    color: var(--muted);
+    min-height: 18px;
+  }
+
+  /* Suggestions dropdown */
+  .suggestions-box {
+    max-width: 780px;
+    margin: 4px auto 0;
+    padding: 0 16px;
+    position: relative;
+    z-index: 100;
+  }
+  .suggestions {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .suggestion-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:hover { background: var(--tag-bg); }
+  .sug-name { font-size: 14px; }
+  .sug-meta { font-size: 11px; color: var(--muted); }
+
+  /* Cards grid */
+  .cards-area {
+    max-width: 780px;
+    margin: 20px auto 40px;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* Employee Card */
+  .emp-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    animation: fadeUp 0.25s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .emp-card:hover {
+    border-color: var(--accent2);
+    box-shadow: 0 4px 20px rgba(88,166,255,0.08);
+  }
+  .card-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .avatar {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+  .emp-main { flex: 1; }
+  .emp-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .emp-desig {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .right-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+  .group-badge {
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .group-A { background: rgba(240,136,62,0.15); color: var(--accent); border: 1px solid rgba(240,136,62,0.3); }
+  .group-B { background: rgba(88,166,255,0.12); color: var(--accent2); border: 1px solid rgba(88,166,255,0.25); }
+  .group-C { background: rgba(63,185,80,0.12); color: var(--success); border: 1px solid rgba(63,185,80,0.25); }
+  .group-D { background: rgba(200,200,200,0.08); color: #aaa; border: 1px solid rgba(200,200,200,0.2); }
+  .toggle-arrow {
+    color: var(--muted);
+    font-size: 12px;
+    transition: transform 0.25s;
+    margin-top: 4px;
+  }
+  .emp-card.open .toggle-arrow { transform: rotate(180deg); }
+
+  /* Card body */
+  .card-body {
+    display: none;
+    border-top: 1px solid var(--border);
+    padding: 18px 20px;
+    gap: 10px;
+    flex-direction: column;
+  }
+  .emp-card.open .card-body { display: flex; }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 480px) {
+    .info-grid { grid-template-columns: 1fr; }
+    .info-grid .full { grid-column: 1; }
+  }
+  .info-item {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .info-item.full { grid-column: 1 / -1; }
+  .info-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .info-value {
+    font-size: 14px;
+    color: var(--text);
+    word-break: break-all;
+  }
+  .info-value a {
+    color: var(--accent2);
+    text-decoration: none;
+  }
+  .info-value a:hover { text-decoration: underline; }
+  .na { color: var(--border); font-style: italic; font-size: 13px; }
+
+  /* Bank section */
+  .bank-section {
+    background: rgba(240,136,62,0.05);
+    border: 1px solid rgba(240,136,62,0.15);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .bank-title {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bank-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  @media (max-width: 520px) {
+    .bank-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    display: none;
+  }
+  .empty-state .emoji { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 { font-size: 16px; color: var(--text); margin-bottom: 8px; }
+
+  /* Welcome state */
+  .welcome-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+  }
+  .welcome-state .emoji { font-size: 56px; margin-bottom: 16px; }
+  .welcome-state h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+  .welcome-state p { font-size: 14px; line-height: 1.6; }
+
+  /* Address section */
+  .addr-section {
+    background: rgba(63,185,80,0.05);
+    border: 1px solid rgba(63,185,80,0.18);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .addr-title {
+    font-size: 11px;
+    color: var(--success);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .addr-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  @media (max-width: 520px) { .addr-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="college-logo-wrap">
+    <img src="gccl.jpg" alt="Golaghat Commerce College (Autonomous)" class="college-logo" />
+  </div>
+  <h1>🎓 কৰ্মচাৰী তথ্য ভাণ্ডাৰ</h1>
+  <div class="subtitle">Employee Information Directory · Golaghat, Assam</div>
+  <div class="stats-row" id="statsRow">
+    <div class="stat-pill">মুঠ কৰ্মচাৰী: <b id="totalCount">—</b></div>
+    <div class="stat-pill">Group-A: <b id="grpA">—</b></div>
+    <div class="stat-pill">Group-B: <b id="grpB">—</b></div>
+    <div class="stat-pill">Group-C/D: <b id="grpCD">—</b></div>
+  </div>
+</div>
+
+<div class="search-section">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="কৰ্মচাৰীৰ নাম লিখক (যেনে: Anamika, Dr. Kakoti)..." autocomplete="off" />
+    <button class="clear-btn" id="clearBtn" title="Clear">✕</button>
+  </div>
+  <div class="filters" id="filterChips">
+    <button class="chip active" data-filter="all">সকলো</button>
+    <button class="chip" data-filter="Group-A">Group-A</button>
+    <button class="chip" data-filter="Group-B">Group-B</button>
+    <button class="chip" data-filter="Group-C">Group-C</button>
+    <button class="chip" data-filter="Group-D">Group-D</button>
+    <button class="chip" data-filter="contractual">চুক্তিভিত্তিক</button>
+  </div>
+</div>
+
+<div class="suggestions-box">
+  <div class="suggestions" id="suggestionsBox"></div>
+</div>
+
+<div class="results-info" id="resultsInfo"></div>
+
+<div class="cards-area" id="cardsArea">
+  <div class="welcome-state">
+    <div class="emoji">🏫</div>
+    <h3>কৰ্মচাৰীৰ নাম সন্ধান কৰক</h3>
+    <p>ওপৰৰ search box-ত কৰ্মচাৰীৰ নাম (সম্পূৰ্ণ বা আংশিক) লিখক।<br>তেওঁৰ সকলো তথ্য তলত দেখা যাব।</p>
+  </div>
+</div>
+
+<script>
+const EMPLOYEES = [{"name":"Dr. Utpal Sarma","email":"utpalsarmagjc@rediffmail.com","mobile":"7002291778","group":"Group-A","designation":"Principal","gender":"Male","dob":"1968-03-01","retirement_date":"2028-02-29","department":"Higher Education","caste":"General","appointment_date":"2020-12-08","qualification":"Ph. D.","bank_ac":"","ifsc":"","employee_id":"PN01300","perm_addr":"Chandmari, Golaghat-785621. P.S: Golaghat, Assam.","curr_addr":"Chandmari, Golaghat-785621. P.S: Golaghat, Assam."},{"name":"Dr. Jiban Jyoti Kakoti","email":"jibonjyotikakoti@yahoo.in","mobile":"9435922022","group":"Group-A","designation":"Associate Professor","gender":"Male","dob":"1966-10-21","retirement_date":"2026-10-31","department":"English","caste":"General","appointment_date":"1994-12-01","qualification":"Ph. D.","bank_ac":"10698304261","ifsc":"SBIN0000083","employee_id":"PT02292","perm_addr":"","curr_addr":""},{"name":"Anamika Hazarika","email":"hanamika834@gmail.com","mobile":"8638906878","group":"Group-A","designation":"Associate Professor","gender":"Female","dob":"1969-01-22","retirement_date":"2029-01-31","department":"Assamese","caste":"General","appointment_date":"1996-08-01","qualification":"Masters","bank_ac":"10698191937","ifsc":"SBIN0000083","employee_id":"PT02293","perm_addr":"","curr_addr":""},{"name":"Moonmoni Baruah","email":"munmoni.baruah@gmail.com","mobile":"9435488482","group":"Group-A","designation":"Associate Professor","gender":"Female","dob":"1969-05-01","retirement_date":"2029-04-30","department":"ECONOMICS","caste":"ST(P)","appointment_date":"1997-08-01","qualification":"Masters","bank_ac":"30122652751","ifsc":"SBIN0000083","employee_id":"PT02294","perm_addr":"Sundar Path, Golaghat Chandmari; Ward no - 10; P.S: Golaghat, Assam-785621","curr_addr":"Sundar Path, Golaghat Chandmari; Ward no - 10; P.S: Golaghat, Assam-785621"},{"name":"Rajesh Jaiswal","email":"rajeshgcc@gmail.com","mobile":"9435053750","group":"Group-A","designation":"Associate Professor","gender":"Male","dob":"1968-08-05","retirement_date":"2028-08-31","department":"Commerce","caste":"General","appointment_date":"1998-04-01","qualification":"Masters","bank_ac":"10698278819","ifsc":"SBIN0000083","employee_id":"PT02295","perm_addr":"Thana Chariali, Golaghat, P.S: Golaghat, Assam. 785621","curr_addr":"Thana Chariali, Golaghat, P.S: Golaghat, Assam. 785621"},{"name":"Dr. Nabami Gogoi","email":"ngogoi.gcc@gmail.com","mobile":"9101135699","group":"Group-A","designation":"Associate Professor","gender":"Female","dob":"1980-11-01","retirement_date":"2040-10-31","department":"Assamese","caste":"OBC","appointment_date":"2005-11-07","qualification":"Ph. D.","bank_ac":"10698345196","ifsc":"SBIN0000083","employee_id":"PT02296","perm_addr":"","curr_addr":""},{"name":"Dr. Pranjal Pratim Dutta","email":"pranjalpratimdutta45@gmail.com","mobile":"9435053370","group":"Group-A","designation":"Associate Professor","gender":"Male","dob":"1973-08-13","retirement_date":"2033-08-31","department":"Accountancy","caste":"General","appointment_date":"2008-11-26","qualification":"Ph. D.","bank_ac":"30126318508","ifsc":"SBIN0000083","employee_id":"PT02297","perm_addr":"Ulutali, P.O. Furkating, Golaghat, Assam-785610. P.S: Furkating.","curr_addr":"Ulutali, P.O. Furkating, Golaghat, Assam-785610. P.S: Furkating."},{"name":"Biswajyoti Doley","email":"biswadoley@gmail.com","mobile":"8638512148","group":"Group-B","designation":"Assistant Professor","gender":"Male","dob":"1980-01-05","retirement_date":"2040-01-31","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"11472947655","ifsc":"SBIN0000083","employee_id":"PT02298","perm_addr":"Bipin Phukon Nagar, Golaghat-785621. P.S: Golaghat.","curr_addr":"Bipin Phukon Nagar, Golaghat-785621. P.S: Golaghat."},{"name":"Dr Karabi Devi","email":"dkarabi0@gmail.com","mobile":"9435325152","group":"Group-A","designation":"Associate Professor","gender":"Female","dob":"1977-03-01","retirement_date":"2037-02-28","department":"Mathematics & Statistics","caste":"General","appointment_date":"2009-01-07","qualification":"Ph. D.","bank_ac":"10432963331","ifsc":"SBIN0000083","employee_id":"PT02299","perm_addr":"","curr_addr":""},{"name":"Dr. Junti Duarah","email":"junti555@rediffmail.com","mobile":"9854129483","group":"Group-B","designation":"Associate Professor","gender":"Female","dob":"1977-05-31","retirement_date":"2037-05-31","department":"Hindi","caste":"General","appointment_date":"2009-03-06","qualification":"Ph. D.","bank_ac":"30530578983","ifsc":"SBIN0000083","employee_id":"PT02300","perm_addr":"Om Arav Building, Jana Small Finance Bank, Thana Road. Ward no 7, Golaghat-785621. P.S: Golaghat","curr_addr":"Om Arav Building, Jana Small Finance Bank, Thana Road. Ward no 7, Golaghat-785621. P.S: Golaghat"},{"name":"Dr. Dipali Gogoi","email":"gogoidipali@gmail.com","mobile":"9401114450","group":"Group-B","designation":"Associate Professor","gender":"Female","dob":"1978-01-01","retirement_date":"2037-12-31","department":"Assamese","caste":"OBC","appointment_date":"2010-08-24","qualification":"Ph. D.","bank_ac":"30317594854","ifsc":"SBIN0000083","employee_id":"PT02301","perm_addr":"Nareswar Borthakur Path, Jyoti Nagar, Golaghat-785621. P.S: Golaghat","curr_addr":"Nareswar Borthakur Path, Jyoti Nagar, Golaghat-785621. P.S: Golaghat"},{"name":"Atul Kumar Das","email":"atuldas1111@gmail.com","mobile":"8486633853","group":"Group-B","designation":"Assistant Professor","gender":"Male","dob":"1981-04-14","retirement_date":"2041-04-30","department":"Commerce","caste":"SC","appointment_date":"2010-08-26","qualification":"Masters","bank_ac":"10243233988","ifsc":"SBIN0007060","employee_id":"PT02302","perm_addr":"C/o- Haripada Das, Ward No 8, Bogolitoka, PO – Bokakhat, Dist - Golaghat, Assam 785612","curr_addr":"C/o-Benoy Borthakur, Jyoti Nagar, Dist. - Golaghat, Assam -785621"},{"name":"Dr.Chinzakhum","email":"ckvaiphei1984@gmail.com","mobile":"9435577887","group":"Group-B","designation":"Associate Professor","gender":"Male","dob":"1984-03-03","retirement_date":"2044-03-31","department":"Business Management","caste":"ST (H)","appointment_date":"2011-10-22","qualification":"Ph. D.","bank_ac":"31823880579","ifsc":"SBIN0011612","employee_id":"PT02303","perm_addr":"Mission Patty Tinali, Ward No. 3. Golaghat, Assam. P.S: Golaghat","curr_addr":"Mission Patty Tinali, Ward No. 3. Golaghat, Assam. P.S: Golaghat"},{"name":"Nandini Baruah","email":"nandinibaruah001@gmail.com","mobile":"7896580888","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1979-04-30","retirement_date":"2039-04-30","department":"English","caste":"OBC","appointment_date":"2011-12-29","qualification":"M.Phil","bank_ac":"30159194274","ifsc":"SBIN0000083","employee_id":"PT02304","perm_addr":"Kacharihat, Sialekhati Gaon, P.S: Kamarbandha, Golaghat, Assam-785702","curr_addr":"Nareswar Borthakur Path, Jyoti Nagar, Golaghat-785621. P.S: Golaghat."},{"name":"Dr. Manash Pratim Sarmah","email":"manashonline24@gmail.com","mobile":"9707604353","group":"Group-B","designation":"Assistant Professor","gender":"Male","dob":"1988-05-08","retirement_date":"2048-05-31","department":"Banking","caste":"General","appointment_date":"2012-10-04","qualification":"Ph. D.","bank_ac":"31272131782","ifsc":"SBIN0007060","employee_id":"PT02305","perm_addr":"Chandmari, Golaghat-785621. P.S: Golaghat, Assam","curr_addr":"Chandmari, Golaghat-785621. P.S: Golaghat, Assam"},{"name":"Dr. Rinki Das","email":"rinkidas.du@gmail.com","mobile":"9706873894","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1987-10-30","retirement_date":"2047-10-31","department":"Human Resource Management","caste":"SC","appointment_date":"2012-10-08","qualification":"Ph. D.","bank_ac":"31334277009","ifsc":"SBIN00l1625","employee_id":"PT02306","perm_addr":"C/o-Krishna Das, Demow Chariali, Near SBI Demow, Sivasagar, Assam. P.S: Demow -785662","curr_addr":"Nakshatra Apartment, Nareswar Borthakur Path, Jyoti Nagar, Golaghat. P.S: Golaghat, Assam."},{"name":"Sabita Saikia","email":"sabitasaikia108@gmail.com","mobile":"9435767873","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1968-09-08","retirement_date":"2028-09-30","department":"Assamese","caste":"General","appointment_date":"2013-01-01","qualification":"Masters","bank_ac":"10698258837","ifsc":"SBIN0000083","employee_id":"PT02307","perm_addr":"C/o- Pitambar Saikia, Dhekial Saikia chuk, P.O.-Dhekial, Dist-Golaghat-785621","curr_addr":"C/o-Dr. Surajit Dutta, Chandmari, Ward No. 10, Golaghat, Assam. P.S: Golaghat"},{"name":"Julfiquera Begum","email":"begumjulfiquera940@gmail.com","mobile":"9401178241","group":"Group-B","designation":"Assistant professor","gender":"Female","dob":"1968-07-02","retirement_date":"2028-07-31","department":"Economics","caste":"General","appointment_date":"2013-01-01","qualification":"M.Phil","bank_ac":"20068166913","ifsc":"SBIN0000083","employee_id":"PT02308","perm_addr":"C/o- Late Khusnur Ali, Golaghat Bengenakhuwa, Near Law college, Seuj path, P.S: Golaghat.","curr_addr":"Golaghat Bengenakhuwa, Near Law college, Seuj path, P.S: Golaghat."},{"name":"Dr. Biman Arandhara","email":"bimanarandhara@gmail.com","mobile":"9401803553","group":"Group-B","designation":"Assistant Professor","gender":"Male","dob":"1975-02-01","retirement_date":"2035-01-31","department":"Education","caste":"OBC","appointment_date":"2013-01-01","qualification":"Ph. D.","bank_ac":"10698337059","ifsc":"SBIN0000083","employee_id":"PT02309","perm_addr":"","curr_addr":""},{"name":"Dr Devajit Dutta","email":"devajitdutta355@gmail.com","mobile":"9435572014","group":"Group-B","designation":"Assistant professor","gender":"Male","dob":"1970-06-16","retirement_date":"2030-06-30","department":"Political science","caste":"General","appointment_date":"2013-01-01","qualification":"Ph. D.","bank_ac":"10698295121","ifsc":"SBIN0000083","employee_id":"PT02310","perm_addr":"Jyoti Nagar, Golaghat, PO -- Golaghat, District - Golaghat, P.S: Golaghat.","curr_addr":"Jyoti Nagar, Golaghat, PO -- Golaghat, District - Golaghat, P.S: Golaghat."},{"name":"Bhaskar Kakati","email":"bhaskarkakati1974@gmail.com","mobile":"8133051906","group":"Group-B","designation":"Assistant Professor","gender":"Male","dob":"1974-02-05","retirement_date":"2034-02-28","department":"POLITICAL SCIENCE","caste":"General","appointment_date":"2013-01-01","qualification":"M. Phil","bank_ac":"10698315365","ifsc":"SBIN0000083","employee_id":"PT02311","perm_addr":"New Amolapatty, Ward no 10, P.S: Golaghat, Golaghat, 785621-Assam","curr_addr":"New Amolapatty, Ward no 10, Golaghat 785621-Assam"},{"name":"Rimarekha Buragohain","email":"rimarekhaburagohain14@gmail.com","mobile":"8638677538","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1970-05-01","retirement_date":"2030-04-30","department":"Education","caste":"OBC","appointment_date":"2013-01-01","qualification":"M.Phil","bank_ac":"33747801576","ifsc":"SBIN0000083","employee_id":"PT02312","perm_addr":"","curr_addr":""},{"name":"Archana Nath","email":"archananath80@gmail.com","mobile":"7086755147","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1977-05-01","retirement_date":"2037-04-30","department":"History","caste":"OBC","appointment_date":"2013-01-01","qualification":"M.Phil.","bank_ac":"33122720142","ifsc":"SBIN0000083","employee_id":"PT02313","perm_addr":"C/o-Padmadhar Nath, Chakardhara Gaon, P.O: Furkating, Dist - Golaghat, P.S: Furkating, Pin: 785610 (Assam)","curr_addr":"Arengapara, Near Veterinary Hospital, P.S: Golaghat, Assam."},{"name":"Diparani Boruah","email":"baruah.dipa.14@gmail.com","mobile":"9435824707","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1972-05-01","retirement_date":"2032-04-30","department":"Assamese","caste":"OBC","appointment_date":"2013-01-01","qualification":"Masters","bank_ac":"31357143534","ifsc":"SBIN0000083","employee_id":"PT02314","perm_addr":"W/O Mr. Mrigen Bora. W/No 11. Panch Ali, Old Amulapatty. P.O. Golaghat. Dist. Golaghat. Pin 785621","curr_addr":"W/O Mr. Mrigen Bora. W/No 11. Panch Ali, Old Amulapatty. P.O. Golaghat. Dist. Golaghat. Pin 785621"},{"name":"Neetima Sarmah","email":"neetimasarmah@gmail.com","mobile":"9435742369","group":"Group-B","designation":"Assistant professor","gender":"Female","dob":"1967-12-27","retirement_date":"2027-12-31","department":"Geography","caste":"General","appointment_date":"2013-01-01","qualification":"M. phil.","bank_ac":"10698241528","ifsc":"SBIN0000083","employee_id":"PT02315","perm_addr":"","curr_addr":""},{"name":"Mandira Bora","email":"mandirabora@yahoo.com","mobile":"9435767705","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1968-02-08","retirement_date":"2028-02-29","department":"Political Science","caste":"General","appointment_date":"2013-01-01","qualification":"M. Phil.","bank_ac":"20068166572","ifsc":"SBIN0000083","employee_id":"PT02316","perm_addr":"C/o-Dr. Jiban Jyoti Kakoti, 10 No. Ward, Chandmari, Pin – 785621, P.O./P.S.- Golaghat","curr_addr":"10 No. Ward, Chandmari, Pin – 785621, P.O./P.S.- Golaghat"},{"name":"Arindam Bora","email":"arindamboragcc@gmail.com","mobile":"7002215731","group":"Group-B","designation":"Assistant Professor","gender":"Male","dob":"1976-05-31","retirement_date":"2036-05-31","department":"Economics","caste":"ST(P)","appointment_date":"2013-01-01","qualification":"M.Phil","bank_ac":"30449595200","ifsc":"SBIN0000083","employee_id":"PT02317","perm_addr":"","curr_addr":""},{"name":"Meghali Saikia","email":"meghalisaikia95@gmail.com","mobile":"9854155917","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1977-06-04","retirement_date":"2037-06-30","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"","ifsc":"","employee_id":"","perm_addr":"C/o- Mr. Mridul Sarma, Mission Compound, Ward No. 9, House No 662. P.S: Golaghat, Assam-785621","curr_addr":"Mission Compound, Ward No. 9, House No 662. P.S: Golaghat, Assam-785621"},{"name":"Jyotirupa Bora","email":"jyotirupa69@gmail.com","mobile":"9085459170","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1969-01-01","retirement_date":"2028-12-31","department":"History","caste":"General","appointment_date":"2013-01-01","qualification":"M.Phil","bank_ac":"20174886216","ifsc":"SBIN0000083","employee_id":"PT02319","perm_addr":"C/o- Dr. Bipul Ch. Bhuyan, Ward No-12, Bidyapur Path, Pin – 785621, P.O./P.S.- Golaghat","curr_addr":"C/o- Dr. Bipul Ch. Bhuyan, Ward No-12, Bidyapur Path, Pin – 785621, P.O./P.S.- Golaghat"},{"name":"Sneha Hazarika","email":"Snehahazarika123@gmail.com","mobile":"9859019675","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1988-06-21","retirement_date":"2048-06-30","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"20122141808","ifsc":"SBIN0000083","employee_id":"PT02320","perm_addr":"","curr_addr":""},{"name":"Himadri Gogoi","email":"himadrigcc2018@gmail.com","mobile":"8638763821","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1991-08-08","retirement_date":"2051-08-31","department":"English","caste":"OBC","appointment_date":"2018-01-24","qualification":"M.Phil","bank_ac":"30470597551","ifsc":"SBIN0002l23","employee_id":"PT02321","perm_addr":"C/o-Krishna Gogoi, Jorhat Garamur, Sankarpur JEC Road, Jorhat -785007","curr_addr":"C/o Mr. Rajesh Singha, House no. 620, College Tiniali, Golaghat-785621"},{"name":"Sonashree Das","email":"sonadasep2@gmail.com","mobile":"8876913384","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1991-06-19","retirement_date":"2051-06-30","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"","ifsc":"","employee_id":"","perm_addr":"C/O-Krishna Das, Demow Chariali, Near SBI Demow, Sivasagar, Assam. P.S: Demow -785662","curr_addr":"Nakshatra Apartment, Nareswar Borthakur Path, Jyoti Nagar, Golaghat. P.S: Golaghat, Assam."},{"name":"Maloti Bangthai","email":"bangthaimaloti18@gmail.com","mobile":"7002899388","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1980-12-18","retirement_date":"2040-12-31","department":"HINDI","caste":"ST (H)","appointment_date":"2019-06-25","qualification":"M.Phil","bank_ac":"33735221817","ifsc":"SBIN0000083","employee_id":"PT02323","perm_addr":"C/o- Late Mohendra Bangthai, Kumarkuchi Gobha, P.O: Amlighat, P.S: Jagiroad, Morigaon, Assam- 782413","curr_addr":"N. B. Path, Jyoti Nagar, Golaghat, Assam. P.S: Golaghat, Pin 785621"},{"name":"Dr. Shankar Jyoti Doley","email":"sjshan29@gmail.com","mobile":"9990637649","group":"Group-B","designation":"Assistant Professor","gender":"Male","dob":"1989-08-21","retirement_date":"2049-08-31","department":"Business Management","caste":"ST(P)","appointment_date":"2020-03-12","qualification":"Ph. D.","bank_ac":"20026492404","ifsc":"SBIN0017208","employee_id":"PT02325","perm_addr":"C/o-Budhen Doley, No. 2 Pichala, Dhalpur, Lakhimpur, Assam, P.S: Bihpuria-784165","curr_addr":"Mission Tinali, Near HP Petrol Pump, Golaghat, P.S: Golaghat, Assam. 785621"},{"name":"Jyoti rekha Borah","email":"jyotirekhabora365@gmail.com","mobile":"9101866816","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1980-01-01","retirement_date":"2039-12-31","department":"Education","caste":"OBC","appointment_date":"2021-01-01","qualification":"M.phil.","bank_ac":"40023353791","ifsc":"SBIN0007060","employee_id":"PT02326","perm_addr":"C/o- Dr. Devajit Dutta, Jyotinagar, Golaghat, Pin – 785621, P.O./P.S.- Golaghat","curr_addr":"C/o- Dr. Devajit Dutta, Jyotinagar, Golaghat, Pin – 785621, P.O./P.S.- Golaghat"},{"name":"Sharmila DuttaTamuli","email":"duttatamulis@gmail.com","mobile":"9854483473","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1977-03-01","retirement_date":"2037-03-31","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"39925802371","ifsc":"SBIN0000083","employee_id":"PT02327","perm_addr":"C/o-Bhairab Dutta, Bhazani Village, Dhitai Pukhuri, Sivasagar, Assam","curr_addr":"Jallan Udyug Nagar, Bengenakhowa, Golaghat"},{"name":"Pronab Pathori","email":"pronab.pathori@gmail.com","mobile":"9401663622","group":"Group-B","designation":"Tutor Assistant Professor","gender":"Male","dob":"1978-05-05","retirement_date":"2038-05-31","department":"History","caste":"ST(P)","appointment_date":"2021-01-01","qualification":"Masters","bank_ac":"30778892322","ifsc":"SBIN0000083","employee_id":"PT02328","perm_addr":"","curr_addr":""},{"name":"Bonti Kalita","email":"bonti.kalita2016@gmail.com","mobile":"9435770136","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1976-07-01","retirement_date":"2036-06-30","department":"Assamese","caste":"OBC","appointment_date":"2021-01-01","qualification":"Masters","bank_ac":"30969856014","ifsc":"SBIN0000083","employee_id":"PT02329","perm_addr":"W/o- Mr. Uttam Saikia, Kacharihat, Sialekhati, Pin-785702, P.S-Kamarbandha, Golaghat","curr_addr":"W/o- Mr. Uttam Saikia, Kacharihat, Sialekhati, Pin-785702, P.S-Kamarbandha, Golaghat"},{"name":"Dr. Prodip Borah","email":"borahprodip601@gmail.com","mobile":"9954538986","group":"Group-B","designation":"Assistant Professor","gender":"Male","dob":"1988-12-28","retirement_date":"2048-12-31","department":"Assamese","caste":"OBC","appointment_date":"2021-02-18","qualification":"Ph. D.","bank_ac":"33113635361","ifsc":"SBIN0007060","employee_id":"PT02330","perm_addr":"C/o-Binanda Borah, No. 1 Dhunia Pather Village, P.O. Sapekhati, P.S. Sapekhati, Dist. Choraideo, Assam 785692","curr_addr":"Ward no. 10, Sundar Path, Chandmari, Dist-Golaghat, Assam. 785621"},{"name":"Dr. Papari Nayak","email":"papari.nayak@gmail.com","mobile":"8721068225","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1990-08-23","retirement_date":"2050-08-31","department":"Management","caste":"General","appointment_date":"2021-02-18","qualification":"Ph. D.","bank_ac":"32008632956","ifsc":"SBIN0000082","employee_id":"PT02331","perm_addr":"C/o-Dr. Khargeswar Nayak, Bamunpara, Goalpara, P.S: Goalpara, Assam. 783101","curr_addr":"Nareswar Borthakur Path, Jyoti Nagar, Golaghat-785621. P.S: Golaghat."},{"name":"Anjan Bharali","email":"bharalianjan28@gmail.com","mobile":"8876213487","group":"Group-B","designation":"Assistant Professor","gender":"Male","dob":"1995-02-28","retirement_date":"2055-02-28","department":"HRM","caste":"OBC","appointment_date":"2022-09-23","qualification":"M.Phil","bank_ac":"20218645478","ifsc":"SBIN0004797","employee_id":"PT02333","perm_addr":"C/O Puspa Bharali, Meteka Bor Ali, Near AILA Gas Godown, Sivasagar, Assam. P.S: Sivasagar. 785640","curr_addr":"C/O Dhritiman Talukdar, Nareswar Borthakur Path, Jyoti Nagar, Golaghat. P.S: Golaghat"},{"name":"Dristi Dhekial Phukan","email":"dristidp88@gmail.com","mobile":"7086209561","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1998-02-28","retirement_date":"2058-02-28","department":"English","caste":"OBC","appointment_date":"2022-09-23","qualification":"Masters","bank_ac":"41270057178","ifsc":"SBIN0000083","employee_id":"PT02334","perm_addr":"C/o-Dibyajyoti Dhekial Phukan, Bordihingia Gaon, Kamargaon, P.S: Kamargaon, Golaghat, Assam. 785619","curr_addr":"Nareswar Borthakur Path, Jyoti Nagar, Golaghat-785621. P.S: Golaghat."},{"name":"Dr. Rinku Saikia","email":"saikiarinku25@gmail.com","mobile":"9401508410","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1989-07-12","retirement_date":"2049-07-31","department":"Maths & Statistics","caste":"OBC","appointment_date":"2022-09-23","qualification":"Ph. D.","bank_ac":"31492231695","ifsc":"SBIN0000083","employee_id":"PT02335","perm_addr":"C/o-Muhidhar Saikia, Balijan Chariali, Barua Gaon, P.S: Ghiladhari, Golaghat, Assam. 785603","curr_addr":"C/o-Mr. Palash Borah, Nareswar Borthakur Path, Jyoti Nagar, Golaghat-785621. P.S: Golaghat."},{"name":"Dr. Abhijit Hazarika","email":"abhijithazarika86@gmail.com","mobile":"7002188736","group":"Group-B","designation":"Assistant Professor","gender":"Male","dob":"1986-09-01","retirement_date":"2046-08-31","department":"Accountancy","caste":"General","appointment_date":"2022-09-24","qualification":"Ph. D.","bank_ac":"30963925326","ifsc":"SBIN0002026","employee_id":"PT02336","perm_addr":"C/o- Golap Hazarika, Vill: Koch Gaon (Borpukhuri road), Biswanath Chariali, Dist: Biswanath, Pin:784176","curr_addr":"C/O Dulal Sarmah, Jyoti Nagar, Golaghat, Pin:785621"},{"name":"Dikshita Baruah","email":"dikshitabaruah2000@gmail.com","mobile":"6901304952","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"2000-05-27","retirement_date":"2060-05-31","department":"Banking","caste":"OBC","appointment_date":"2024-02-26","qualification":"Masters","bank_ac":"35896952358","ifsc":"SBIN0002051","employee_id":"PT31434","perm_addr":"C/o- Dr. Debajit Kumar Baruah, Joymati Path, Godapani, Near Dibrugarh University, Dibrugarh. P.S: Barbaruah, Assam. 786004","curr_addr":"Sundar Path, Chandmari, Golaghat-785621. P.S: Golaghat."},{"name":"Devangana Saikia","email":"devangana.saikia@gmail.com","mobile":"8876716090","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1991-04-03","retirement_date":"2051-04-30","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"","ifsc":"","employee_id":"","perm_addr":"C/o- Lakhidhar Saikia, Old Amolapatty, Vidyapur Path. Ward no:12 P.O/P.S: Golaghat, Pin 785621","curr_addr":"C/o- Lakhidhar Saikia, Old Amolapatty, Vidyapur Path. Ward no:12 P.O/P.S: Golaghat, Pin 785621"},{"name":"Angkita Borpatragohain","email":"angkitag36@gmail.com","mobile":"8876225974","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"1997-01-04","retirement_date":"2057-01-31","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"32484247111","ifsc":"SBIN0000083","employee_id":"PT31583","perm_addr":"C/o-Upen Borpatra Gohain, B.Borborah Path, Purana Amulapatty, Golaghat-785621. P.S: Golaghat","curr_addr":"C/o-Upen Borpatra Gohain, B.Borborah Path, Purana Amulapatty, Golaghat-785621. P.S: Golaghat"},{"name":"Nelashree Pawgam","email":"pawgamnelashree1313@gmail.com","mobile":"9101695019","group":"Group-B","designation":"Assistant Professor","gender":"Female","dob":"2000-01-05","retirement_date":"2060-01-31","department":"Economics","caste":"ST(P)","appointment_date":"2024-04-01","qualification":"Masters","bank_ac":"37044218356","ifsc":"SBIN0018738","employee_id":"PT31584","perm_addr":"C/o- Tee Pawgam, Mil Gaon, Nakachari, PO- Chungilahing, PS- Mariani, District- Jorhat, Pin- 785635","curr_addr":"C/o- Mrs. Moonmoni Baruah, Sundar Path, Golaghat Chandmari; Ward no - 10; P.S: Golaghat, Assam-785621"},{"name":"Bimal Chandra Pathak","email":"bcpathak19@gmail.com","mobile":"9508361866","group":"Group-B","designation":"Librarian","gender":"Male","dob":"1975-12-01","retirement_date":"2035-11-30","department":"Higher Education","caste":"SC","appointment_date":"2012-03-22","qualification":"M..Phil","bank_ac":"32345062785","ifsc":"SBIN0007060","employee_id":"PN02337","perm_addr":"","curr_addr":""},{"name":"Dipmoni Borgohain","email":"d_gohain@yahoo.com","mobile":"9957691826","group":"Group-C","designation":"Senior Assistant","gender":"Male","dob":"1968-02-12","retirement_date":"2028-02-29","department":"Higher Education","caste":"OBC","appointment_date":"2008-04-17","qualification":"B. A.","bank_ac":"30378802831","ifsc":"SBIN0000083","employee_id":"PN02339","perm_addr":"","curr_addr":""},{"name":"Phanidhar Saikia","email":"saikiaphanidhar66@gmail.com","mobile":"8133886150","group":"Group-C","designation":"Library Assistant","gender":"Male","dob":"1966-04-01","retirement_date":"2026-04-30","department":"Higher Education","caste":"OBC","appointment_date":"2008-04-25","qualification":"B. Com.","bank_ac":"30397533147","ifsc":"SBIN0000083","employee_id":"PN02340","perm_addr":"","curr_addr":""},{"name":"Nayanmoni Doley","email":"nayanmonidoley27@gmail.com","mobile":"6900994700","group":"Group-C","designation":"Junior Assistant","gender":"Female","dob":"1986-09-27","retirement_date":"2046-09-30","department":"Higher Education","caste":"ST(P)","appointment_date":"2012-03-27","qualification":"B. Sc.","bank_ac":"10698171239","ifsc":"SBIN0000083","employee_id":"PN02341","perm_addr":"","curr_addr":""},{"name":"Satyajit Bhuyan","email":"satyajitbhuyan3003@gmail.com","mobile":"6000102963","group":"Group-C","designation":"Junior Assistant","gender":"Male","dob":"1984-12-01","retirement_date":"2044-11-30","department":"Higher Education","caste":"General","appointment_date":"2013-01-01","qualification":"B. A.","bank_ac":"20068166390","ifsc":"SBIN0000083","employee_id":"PN02342","perm_addr":"C/o Deben Bhuyan, Balichapori, Majuli, P.S: Garmurh, 785104","curr_addr":"C/o Imran Hussain, House No-273, Ward No-3, Shantipur, Golaghat, Assam. P.S: Golaghat, Assam"},{"name":"Lanin Hazarika","email":"laninhazarika1986@gmail.com","mobile":"7002404729","group":"Group-C","designation":"Junior Assistant","gender":"Male","dob":"1986-01-31","retirement_date":"2046-01-31","department":"Higher Education","caste":"General","appointment_date":"2021-12-01","qualification":"B. Com.","bank_ac":"10698337694","ifsc":"SBIN0000083","employee_id":"PN02343","perm_addr":"C/o- Late Makhan Hazarika, Sundar Path, Chandmari, Golaghat, Assam. P.S: Golaghat, 785621","curr_addr":"C/o- Late Makhan Hazarika, Sundar Path, Chandmari, Golaghat, Assam. P.S: Golaghat, 785621"},{"name":"Subit Gogoi","email":"subitgogoi12@gmail.com","mobile":"7002552070","group":"Group-C","designation":"Junior Assistant","gender":"Male","dob":"1988-01-01","retirement_date":"2048-11-30","department":"Higher Education","caste":"OBC","appointment_date":"2023-06-01","qualification":"B.A.","bank_ac":"31513163178","ifsc":"SBIN0000083","employee_id":"PN02344","perm_addr":"C/o- Late Arun Gogoi, Junaki Nagar, Golaghat, Assam. P.S: Golaghat.","curr_addr":"C/o- Late Arun Gogoi, Junaki Nagar, Golaghat, Assam. P.S: Golaghat."},{"name":"Lalit Gogoi","email":"lalitgogoigcc@gmail.com","mobile":"9435831976","group":"Group-D","designation":"Grade-IV","gender":"Male","dob":"1971-05-24","retirement_date":"2031-05-31","department":"Higher Education","caste":"OBC","appointment_date":"2008-05-08","qualification":"Class- IX","bank_ac":"30400822966","ifsc":"SBIN0000083","employee_id":"PN02345","perm_addr":"C/o- Late Narayan Gogoi, Jyoti Nagar, Near Golaghat Commerce College, P.S: Golaghat, Assam-785621","curr_addr":"C/o- Late Narayan Gogoi, Jyoti Nagar, Near Golaghat Commerce College, P.S: Golaghat, Assam-785621"},{"name":"Gangadhar Gogoi","email":"gangadhargogoi11@gmail.com","mobile":"9854568124","group":"Group-D","designation":"Grade-IV","gender":"Male","dob":"1969-01-02","retirement_date":"2029-01-31","department":"Higher Education","caste":"OBC","appointment_date":"2013-01-01","qualification":"","bank_ac":"32885623204","ifsc":"SBIN0007060","employee_id":"PN02346","perm_addr":"Batipuria, Golaghat-785618. P.S: Dergaon","curr_addr":"Batipuria, Golaghat-785618. P.S: Dergaon"},{"name":"Duleswar Phukan","email":"duleswarphukan4@gmail.com","mobile":"9435469014","group":"Group-D","designation":"Grade-IV","gender":"Male","dob":"1978-04-09","retirement_date":"2038-04-30","department":"Higher Education","caste":"OBC","appointment_date":"2013-01-01","qualification":"Class- IX","bank_ac":"33038487406","ifsc":"SBIN0000083","employee_id":"PN02347","perm_addr":"2 No. Bongaon, Near Dhekeripota LP School, P.S: Golaghat, Assam-785621","curr_addr":"2 No. Bongaon, Near Dhekeripota LP School, P.S: Golaghat, Assam-785621"},{"name":"Premo Gogoi","email":"premogogoi68@gmail.com","mobile":"7035612574","group":"Group-D","designation":"Grade-IV","gender":"Male","dob":"1968-04-24","retirement_date":"2028-04-30","department":"Higher Education","caste":"OBC","appointment_date":"2013-01-01","qualification":"Class - VIII","bank_ac":"32895689865","ifsc":"SBIN0000083","employee_id":"PN02348","perm_addr":"","curr_addr":""},{"name":"Luku Saikia","email":"lukusaikialuku3@gmail.com","mobile":"6000612655","group":"Group-D","designation":"Grade-IV","gender":"Male","dob":"1989-11-25","retirement_date":"2049-11-30","department":"Higher Education","caste":"OBC","appointment_date":"2023-06-01","qualification":"H.S.","bank_ac":"41954894236","ifsc":"SBIN0000083","employee_id":"PN02349","perm_addr":"","curr_addr":""},{"name":"Pravat Dutta","email":"pravatdutta908@gmail.com","mobile":"7577014154","group":"Group-D","designation":"Grade-IV","gender":"Male","dob":"1992-10-02","retirement_date":"2052-10-31","department":"Higher Education","caste":"General","appointment_date":"2023-06-01","qualification":"B.A.","bank_ac":"34855096526","ifsc":"SBIN0002048","employee_id":"PN02350","perm_addr":"C/o-Benudhar Dutta, 1 No. Khukandaguri, Joraguri, P.S: Dergaon, Golaghat, Assam. 785614","curr_addr":"C/o- Benudhar Dutta, 1 No. Khukandaguri, Joraguri, P.S: Dergaon, Golaghat, Assam. 785614"},{"name":"Nomita Dutta","email":"nomitadutta575@gmail.com","mobile":"6002784330","group":"Group-D","designation":"Grade-IV","gender":"Female","dob":"1988-03-15","retirement_date":"2048-03-31","department":"Higher Education","caste":"Gen","appointment_date":"2024-08-01","qualification":"B.A.","bank_ac":"32681022964","ifsc":"SBIN0000083","employee_id":"","perm_addr":"","curr_addr":""},{"name":"Dibyendu Palit","email":"tinkupalit@gmail.com","mobile":"6001076966","group":"Group-B","designation":"Asst. Prof. (contractual)","gender":"Male","dob":"1968-01-14","retirement_date":"2028-01-31","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"7220010007961","ifsc":"PUNB0RRBAGB","employee_id":"CT15103","perm_addr":"","curr_addr":""},{"name":"Monurama Saikia","email":"monurama74@gmail.com","mobile":"9854834980","group":"Group-B","designation":"Asst. Prof. (contractual)","gender":"Female","dob":"1973-10-21","retirement_date":"2033-10-31","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"7220010007978","ifsc":"PUNB0RRBAGB","employee_id":"CT15105","perm_addr":"","curr_addr":""},{"name":"Tulumoni Gogoi","email":"arnabnilimneoggogoi@gmail.com","mobile":"9365305419","group":"Group-B","designation":"Asst. Prof. (contractual)","gender":"Female","dob":"1982-02-15","retirement_date":"2042-02-28","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"7220010007963","ifsc":"PUNB0RRBAGB","employee_id":"CT15109","perm_addr":"","curr_addr":""},{"name":"Julee Dutta","email":"juleedutta11@gmail.com","mobile":"7002548075","group":"Group-B","designation":"Asst. Prof. (contractual)","gender":"Female","dob":"1978-01-30","retirement_date":"2038-01-31","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"7220010014669","ifsc":"PUNB0RRBAGB","employee_id":"CT15107","perm_addr":"","curr_addr":""},{"name":"Parash Patim Saikia","email":"parashistory123@gmail.com","mobile":"8638254367","group":"Group-B","designation":"Asst. Prof. (contractual)","gender":"Male","dob":"1981-05-05","retirement_date":"2041-05-31","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"7220010007975","ifsc":"PUNB0RRBAGB","employee_id":"CT15108","perm_addr":"","curr_addr":""},{"name":"Arundhuti  Phatowali","email":"phatowaliarundhati@gmail.com","mobile":"7002682871","group":"Group-B","designation":"Asst. Prof. (contractual)","gender":"Female","dob":"1974-10-08","retirement_date":"2034-10-31","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"7220010015826","ifsc":"PUNB0RRBAGB","employee_id":"CT30996","perm_addr":"","curr_addr":""},{"name":"Sashanka Saikia","email":"sasankasaikia1975@gmail.com","mobile":"8638032808","group":"Group-B","designation":"Asst. Prof. (contractual)","gender":"Male","dob":"1975-03-30","retirement_date":"2035-03-31","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"7220010076960","ifsc":"PUNB0RRBAGB","employee_id":"CT15106","perm_addr":"","curr_addr":""},{"name":"Reema Baruah","email":"reemabaruah76@gmail.com","mobile":"8473019661","group":"Group-B","designation":"Asst. Prof. (contractual)","gender":"Female","dob":"1976-08-01","retirement_date":"2036-08-31","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"7220010077002","ifsc":"PUNB0RRBAGB","employee_id":"CT15112","perm_addr":"","curr_addr":""},{"name":"Manash Pratim Hazarika","email":"hazarikamanashpratim@gmail.com","mobile":"60030 89364","group":"Group-B","designation":"Asst. Prof. (contractual)","gender":"Male","dob":"1986-03-04","retirement_date":"2046-03-31","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"7220010007189","ifsc":"PUNB0RRBAGB","employee_id":"CT15104","perm_addr":"Mohuramukh, Kamargaon. P.S: Kamargaon, Golaghat, 785619","curr_addr":"Mohuramukh, Kamargaon. P.S: Kamargaon, Golaghat, 785619"},{"name":"Ankur Borah","email":"boraankur284@gmail.com","mobile":"7002516544","group":"Group-B","designation":"Asst. Prof. (contractual)","gender":"Male","dob":"1989-02-22","retirement_date":"2049-02-28","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"7220010077400","ifsc":"PUNB0RRBAGB","employee_id":"CT15110","perm_addr":"Salikihat, Kamarbondha, P.S: Kamarbondha, Golaghat, Assam.","curr_addr":"Salikihat, Kamarbondha, P.S: Kamarbondha, Golaghat, Assam."},{"name":"Shyamali Barpatra Gohain","email":"shyamolibpgohain@gmail.com","mobile":"9365459426","group":"Group-C","designation":"Lib. Assist. (contractual)","gender":"Female","dob":"1988-07-01","retirement_date":"2048-07-31","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"7191019081336","ifsc":"PUNB0RRBAGB","employee_id":"","perm_addr":"","curr_addr":""},{"name":"Liza Mahanta","email":"lizamahanta23@gmail.com","mobile":"9101464253","group":"Group-C","designation":"Junior Assistant","gender":"Female","dob":"1988-12-19","retirement_date":"2048-12-31","department":"Higher Education","caste":"General","appointment_date":"2025-12-01","qualification":"B.A./ BLISc","bank_ac":"44723089301","ifsc":"SBIN0007060","employee_id":"","perm_addr":"","curr_addr":""},{"name":"Mukul Chetry","email":"chetrymukul53@gmail.com","mobile":"6001835674","group":"Group-D","designation":"Grade-IV (contractual)","gender":"Male","dob":"1983-03-05","retirement_date":"2043-03-31","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"7220010007981","ifsc":"PUNB0RRBAGB","employee_id":"","perm_addr":"C/o-Dhonbahadur Chetry, Jyoti Nagar, SP Office Road, Near Golaghat Commerce College, P.S: Golaghat, Assam-785621","curr_addr":"C/o- Dhonbahadur Chetry, Jyoti Nagar, SP Office Road, Near Golaghat Commerce College, P.S: Golaghat, Assam-785621"},{"name":"Abhilasha Borkataky","email":"","mobile":"9365513017","group":"","designation":"","gender":"","dob":"","retirement_date":"","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"","ifsc":"","employee_id":"","perm_addr":"","curr_addr":""},{"name":"Sagarika Bora","email":"","mobile":"9101847133","group":"","designation":"","gender":"","dob":"","retirement_date":"","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"","ifsc":"","employee_id":"","perm_addr":"","curr_addr":""},{"name":"Dr. Tirthankar Sarma","email":"tirthankar389@gmail.com","mobile":"9395301609","group":"","designation":"","gender":"","dob":"","retirement_date":"","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"","ifsc":"","employee_id":"","perm_addr":"","curr_addr":""},{"name":"Anubhab Handique","email":"","mobile":"7896763673","group":"","designation":"","gender":"","dob":"","retirement_date":"","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"","ifsc":"","employee_id":"","perm_addr":"","curr_addr":""},{"name":"Pranchi Bora","email":"","mobile":"6001470137","group":"","designation":"","gender":"","dob":"","retirement_date":"","department":"","caste":"","appointment_date":"","qualification":"","bank_ac":"","ifsc":"","employee_id":"","perm_addr":"","curr_addr":""}];
+
+// Stats
+document.getElementById('totalCount').textContent = EMPLOYEES.length;
+document.getElementById('grpA').textContent = EMPLOYEES.filter(e=>e.group==='Group-A').length;
+document.getElementById('grpB').textContent = EMPLOYEES.filter(e=>e.group==='Group-B').length;
+document.getElementById('grpCD').textContent = EMPLOYEES.filter(e=>e.group==='Group-C'||e.group==='Group-D').length;
+
+let activeFilter = 'all';
+const searchInput = document.getElementById('searchInput');
+const clearBtn = document.getElementById('clearBtn');
+const cardsArea = document.getElementById('cardsArea');
+const suggestionsBox = document.getElementById('suggestionsBox');
+const suggestions = document.getElementById('suggestionsBox').querySelector ? document.getElementById('suggestionsBox') : null;
+const sugDiv = document.querySelector('.suggestions');
+const resultsInfo = document.getElementById('resultsInfo');
+
+// Filter chips
+document.getElementById('filterChips').addEventListener('click', e => {
+  if (!e.target.classList.contains('chip')) return;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  e.target.classList.add('active');
+  activeFilter = e.target.dataset.filter;
+  doSearch(searchInput.value.trim());
+});
+
+function filterEmployees(q, filter) {
+  return EMPLOYEES.filter(emp => {
+    const nameMatch = q === '' || emp.name.toLowerCase().includes(q.toLowerCase());
+    let groupMatch = true;
+    if (filter === 'Group-A') groupMatch = emp.group === 'Group-A';
+    else if (filter === 'Group-B') groupMatch = emp.group === 'Group-B';
+    else if (filter === 'Group-C') groupMatch = emp.group === 'Group-C';
+    else if (filter === 'Group-D') groupMatch = emp.group === 'Group-D';
+    else if (filter === 'contractual') groupMatch = emp.designation.toLowerCase().includes('contractual');
+    return nameMatch && groupMatch;
+  });
+}
+
+function getInitials(name) {
+  return name.split(' ').filter(w=>w && w!=='Dr.'&&w!=='Dr').slice(0,2).map(w=>w[0]).join('').toUpperCase() || name[0].toUpperCase();
+}
+
+function getGroupClass(grp) {
+  if (!grp) return '';
+  if (grp === 'Group-A') return 'group-A';
+  if (grp === 'Group-B') return 'group-B';
+  if (grp === 'Group-C') return 'group-C';
+  return 'group-D';
+}
+
+function val(v) {
+  if (!v || v === 'nan' || v === 'NaT') return '<span class="na">—</span>';
+  return v;
+}
+
+function fmtDate(d) {
+  if (!d || d==='nan'||d==='NaT') return '<span class="na">—</span>';
+  try {
+    const dt = new Date(d);
+    return dt.toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+  } catch { return d; }
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function infoItem(label, value, full) {
+  if (!value || value === 'nan' || value === 'NaT') return '';
+  return '<div class="info-item'+(full?' full':'')+'"><div class="info-label">'+label+'</div><div class="info-value">'+value+'</div></div>';
+}
+
+function renderCard(emp, idx) {
+  const initials = getInitials(emp.name);
+  const grpClass = getGroupClass(emp.group);
+  const hasBankInfo = emp.bank_ac || emp.ifsc;
+  const hasAddr = emp.perm_addr || emp.curr_addr;
+
+  let addrHtml = '';
+  if (hasAddr) {
+    addrHtml = '<div class="addr-section"><div class="addr-title">📍 ঠিকনা (Address)</div><div class="addr-grid">';
+    if (emp.perm_addr) addrHtml += '<div class="info-item"><div class="info-label">স্থায়ী ঠিকনা (Permanent)</div><div class="info-value" style="font-size:13px;line-height:1.5">'+esc(emp.perm_addr)+'</div></div>';
+    if (emp.curr_addr) addrHtml += '<div class="info-item"><div class="info-label">বৰ্তমান ঠিকনা (Current)</div><div class="info-value" style="font-size:13px;line-height:1.5">'+esc(emp.curr_addr)+'</div></div>';
+    addrHtml += '</div></div>';
+  }
+
+  let bankHtml = '';
+  if (hasBankInfo) {
+    bankHtml = '<div class="bank-section"><div class="bank-title">🏦 বেংক তথ্য</div><div class="bank-grid">';
+    if (emp.bank_ac) bankHtml += '<div class="info-item"><div class="info-label">Account No.</div><div class="info-value">'+esc(emp.bank_ac)+'</div></div>';
+    if (emp.ifsc)    bankHtml += '<div class="info-item"><div class="info-label">IFSC Code</div><div class="info-value">'+esc(emp.ifsc)+'</div></div>';
+    if (emp.employee_id) bankHtml += '<div class="info-item"><div class="info-label">Employee ID</div><div class="info-value">'+esc(emp.employee_id)+'</div></div>';
+    bankHtml += '</div></div>';
+  }
+
+  let gridHtml = '<div class="info-grid">';
+  gridHtml += '<div class="info-item"><div class="info-label">📱 Mobile</div><div class="info-value"><a href="tel:'+esc(emp.mobile)+'">'+val(emp.mobile)+'</a></div></div>';
+  gridHtml += '<div class="info-item"><div class="info-label">⚧ Gender</div><div class="info-value">'+val(emp.gender)+'</div></div>';
+  gridHtml += '<div class="info-item full"><div class="info-label">✉️ Email</div><div class="info-value">'+(emp.email ? '<a href="mailto:'+esc(emp.email)+'">'+esc(emp.email)+'</a>' : '<span class="na">—</span>')+'</div></div>';
+  gridHtml += '<div class="info-item"><div class="info-label">🎂 জন্ম তাৰিখ</div><div class="info-value">'+fmtDate(emp.dob)+'</div></div>';
+  gridHtml += '<div class="info-item"><div class="info-label">📅 অৱসৰ তাৰিখ</div><div class="info-value">'+fmtDate(emp.retirement_date)+'</div></div>';
+  if (emp.department) gridHtml += '<div class="info-item"><div class="info-label">🏛️ Department</div><div class="info-value">'+esc(emp.department)+'</div></div>';
+  if (emp.caste)      gridHtml += '<div class="info-item"><div class="info-label">📋 Caste</div><div class="info-value">'+esc(emp.caste)+'</div></div>';
+  if (emp.appointment_date) gridHtml += '<div class="info-item"><div class="info-label">📌 নিযুক্তি তাৰিখ</div><div class="info-value">'+fmtDate(emp.appointment_date)+'</div></div>';
+  if (emp.qualification) gridHtml += '<div class="info-item"><div class="info-label">🎓 যোগ্যতা</div><div class="info-value">'+esc(emp.qualification)+'</div></div>';
+  gridHtml += '</div>';
+
+  return '<div class="emp-card" id="card'+idx+'">'
+    + '<div class="card-header" onclick="toggleCard('+idx+')">'
+    + '<div class="avatar">'+initials+'</div>'
+    + '<div class="emp-main">'
+    + '<div class="emp-name">'+esc(emp.name)+'</div>'
+    + '<div class="emp-desig">'+(emp.designation||'—')+(emp.employee_id ? ' · <span style="color:#58a6ff;font-size:11px;">'+esc(emp.employee_id)+'</span>' : '')+'</div>'
+    + '</div>'
+    + '<div class="right-meta">'
+    + (emp.group ? '<span class="group-badge '+grpClass+'">'+emp.group+'</span>' : '')
+    + '<span class="toggle-arrow">▼</span>'
+    + '</div></div>'
+    + '<div class="card-body">'+gridHtml+addrHtml+bankHtml+'</div>'
+    + '</div>';
+}
+
+function toggleCard(idx) {
+  const card = document.getElementById('card'+idx);
+  card.classList.toggle('open');
+}
+
+function doSearch(q) {
+  hideSuggestions();
+  const results = filterEmployees(q, activeFilter);
+  
+  if (q === '' && activeFilter === 'all') {
+    cardsArea.innerHTML = `<div class="welcome-state"><div class="emoji">🏫</div><h3>কৰ্মচাৰীৰ নাম সন্ধান কৰক</h3><p>ওপৰৰ search box-ত কৰ্মচাৰীৰ নাম লিখক।<br>তেওঁৰ সকলো তথ্য তলত দেখা যাব।</p></div>`;
+    resultsInfo.textContent = '';
+    return;
+  }
+  
+  if (results.length === 0) {
+    cardsArea.innerHTML = `<div class="empty-state" style="display:block"><div class="emoji">🔎</div><h3>"${q}" নামেৰে কোনো কৰ্মচাৰী পোৱা নগ'ল</h3><p>সঠিক নাম বা আংশিক নাম লিখক।</p></div>`;
+    resultsInfo.textContent = '';
+    return;
+  }
+  
+  resultsInfo.textContent = `${results.length} জন কৰ্মচাৰী পোৱা গ'ল`;
+  cardsArea.innerHTML = results.map((emp, i) => renderCard(emp, i)).join('');
+  // Auto-open if single result
+  if (results.length === 1) {
+    setTimeout(() => document.getElementById('card0')?.classList.add('open'), 50);
+  }
+}
+
+function showSuggestions(q) {
+  if (q.length < 1) { hideSuggestions(); return; }
+  const matches = EMPLOYEES.filter(e => e.name.toLowerCase().includes(q.toLowerCase())).slice(0, 6);
+  if (matches.length === 0) { hideSuggestions(); return; }
+  sugDiv.innerHTML = matches.map(e => `
+    <div class="suggestion-item" onclick="selectSuggestion('${e.name.replace(/'/g,"\\'")}')">
+      <span class="sug-name">${e.name}</span>
+      <span class="sug-meta">${e.designation || ''}</span>
+    </div>`).join('');
+  sugDiv.style.display = 'block';
+}
+
+function hideSuggestions() { sugDiv.style.display = 'none'; }
+
+function selectSuggestion(name) {
+  searchInput.value = name;
+  clearBtn.style.display = 'flex';
+  doSearch(name);
+  hideSuggestions();
+}
+
+searchInput.addEventListener('input', e => {
+  const q = e.target.value.trim();
+  clearBtn.style.display = q ? 'flex' : 'none';
+  showSuggestions(q);
+  doSearch(q);
+});
+
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') hideSuggestions();
+});
+
+clearBtn.addEventListener('click', () => {
+  searchInput.value = '';
+  clearBtn.style.display = 'none';
+  doSearch('');
+  searchInput.focus();
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-section') && !e.target.closest('.suggestions-box')) hideSuggestions();
+});
+</script>
+</body>
+</html>
